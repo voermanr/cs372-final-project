@@ -30,13 +30,10 @@ def monitor_input(name, socket):
 def run_client(name: str, address, port):
     global exit_flag
 
-    hello_packet = create_packet(name, packet_type="hello")
-
     chatui.init_windows()
 
     with so.socket() as socket:
-        socket.connect((address, port))
-        socket.sendall(hello_packet)
+        send_hello_packet(address, name, port, socket)
 
         sending_thread = threading.Thread(target=monitor_input, args=(name, socket))
         sending_thread.start()
@@ -45,6 +42,7 @@ def run_client(name: str, address, port):
 
         while not exit_flag.is_set():
             readable_sockets, _, _ = select.select({socket}, {}, {}, .001)
+
             for ready_socket in readable_sockets:
                 data = ready_socket.recv(4096)
 
@@ -85,6 +83,12 @@ def run_client(name: str, address, port):
         socket.close()
 
         chatui.end_windows()
+
+
+def send_hello_packet(address, name, port, socket):
+    hello_packet = create_packet(name, packet_type="hello")
+    socket.connect((address, port))
+    socket.sendall(hello_packet)
 
 
 def create_packet(name: str, packet_type: str, message: str = ''):
